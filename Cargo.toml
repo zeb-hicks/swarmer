@@ -1,12 +1,47 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/game",
+    "crates/*",
 ]
 default-members = ["crates/game"]
 
+[workspace.dependencies]
+bevy_framepace = "0.16.0"
+bevy_scriptum = { version = "0.5.0", features = ["rhai"] }
+
+[workspace.dependencies.bevy]
+version = "0.13.1"
+default-features = false
+features = [
+    # "dynamic_linking",
+    # "animation",
+    "bevy_asset",
+    # "bevy_audio",
+    "bevy_gilrs",
+    "bevy_scene",
+    "bevy_winit",
+    "bevy_core_pipeline",
+    # "bevy_pbr",
+    # "bevy_gltf",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_text",
+    "bevy_ui",
+    "multi-threaded",
+    "png",
+    "hdr",
+    "vorbis",
+    "x11",
+    "bevy_gizmos",
+    # "android_shared_stdcxx",
+    # "tonemapping_luts",
+    "default_font",
+    # "webgl2",
+    "file_watcher",
+]
+
 [profile.dev]
-opt-level = 0
+opt-level = 1
 overflow-checks = true
 debug-assertions = true
 debug = true
@@ -17,3 +52,12 @@ incremental = true
 # Use opt level 3 for dependencies
 [profile.dev.package."*"]
 opt-level = 3
+
+[profile.release]
+opt-level = 'z'
+lto = true
+strip = true
+codegen-units = 1
+#prefer-dynamic = false
+debug = false
+panic = 'abort'

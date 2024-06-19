@@ -1,32 +1,36 @@
 // #![windows_subsystem = "windows"]
 
-use bevy::{
-    prelude::*,
-    sprite::MaterialMesh2dBundle,
-};
+use bevy::prelude::*;
+use player::PlayerPlugin;
+use pixelate::PixelatePlugin;
 
 fn main() {
     App::new()
-        .insert_resource(Msaa::Off)
-        .add_plugins(DefaultPlugins)
-        .add_systems(Startup, setup)
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins(PixelatePlugin)
+        .add_plugins(PlayerPlugin)
+        .add_systems(Update, spawn_minions)
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    commands.spawn(Camera2dBundle::default());
+pub enum MinionType {
+    Melee1,
+    Melee2,
+    Ranged1,
+    Ranged2,
+}
 
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: meshes.add(Rectangle::default()).into(),
-        transform: Transform::default().with_scale(Vec3::splat(400.)),
-        material: materials.add(ColorMaterial {
-            color: Color::rgb(1.0, 1.0, 1.0),
-            texture: None,
-        }),
-        ..default()
-    });
+#[derive(Component)]
+pub struct MinionSpawner {
+    pub spawn_rate: f32,
+    pub spawn_timer: f32,
+    pub spawn_radius: f32,
+    pub spawn_limit: i32,
+    pub minion_type: MinionType,
+}
+
+fn spawn_minions(
+    // spawners: Query()
+) {
+
 }
