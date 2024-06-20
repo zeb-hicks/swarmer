@@ -9,6 +9,7 @@ edition = "2021"
 bevy = { workspace = true }
 bevy_framepace = { workspace = true }
 bevy_scriptum = { workspace = true }
+leafwing-input-manager = { workspace = true }
 
 pixelate = { path = "../pixelate" }
 

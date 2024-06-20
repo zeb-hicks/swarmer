@@ -13,22 +13,6 @@ fn main() {
         .run();
 }
 
-pub enum MinionType {
-    Melee1,
-    Melee2,
-    Ranged1,
-    Ranged2,
-}
-
-#[derive(Component)]
-pub struct MinionSpawner {
-    pub spawn_rate: f32,
-    pub spawn_timer: f32,
-    pub spawn_radius: f32,
-    pub spawn_limit: i32,
-    pub minion_type: MinionType,
-}
-
 fn spawn_minions(
     // spawners: Query()
 ) {

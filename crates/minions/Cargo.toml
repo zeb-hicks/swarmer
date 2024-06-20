@@ -1,11 +1,9 @@
 [package]
-name = "player"
+name = "minions"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 bevy = { workspace = true }
-leafwing-input-manager = { workspace = true }
 
-pixelate = { path = "../pixelate" }
 entities = { path = "../entities" }
