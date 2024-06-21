@@ -9,6 +9,7 @@ default-members = ["crates/game"]
 bevy_framepace = "0.16.0"
 bevy_scriptum = { version = "0.5.0", features = ["rhai"] }
 leafwing-input-manager = "0.13.3"
+rand = "0.8.5"
 
 [workspace.dependencies.bevy]
 version = "0.13.1"
