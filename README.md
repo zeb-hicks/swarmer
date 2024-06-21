@@ -2,4 +2,4 @@
 
 Incredible world-class gameplay:
 
-![gameplay](https://nimphio.us/share/game_h3QUUsnPXG.gif)
+![gameplay](https://raw.githubusercontent.com/zeb-hicks/swarmer/main/gameplay.gif)
