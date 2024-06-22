@@ -1783,6 +1783,7 @@ dependencies = [
  "entities",
  "input",
  "leafwing-input-manager",
+ "minions",
  "pixelate",
  "player",
 ]
@@ -2810,6 +2811,7 @@ dependencies = [
  "entities",
  "input",
  "leafwing-input-manager",
+ "minions",
  "pixelate",
 ]
 
