@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{ "path": "." }
+	],
+	"settings": {
+		"cargo_build": {
+			"paths": {
+				
+			}
+		}
+	}
+}

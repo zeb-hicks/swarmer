@@ -9,3 +9,5 @@ rand = { workspace = true }
 
 pixelate = { path = "../pixelate" }
 entities = { path = "../entities" }
+input = { path = "../input" }
+assets = { path = "../assets" }

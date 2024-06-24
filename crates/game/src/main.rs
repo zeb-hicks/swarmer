@@ -1,7 +1,9 @@
 // #![windows_subsystem = "windows"]
 
 use bevy::prelude::*;
+use entities::EntityPlugin;
 use input::InputPlugin;
+use minions::MinionPlugin;
 use player::PlayerPlugin;
 use pixelate::PixelatePlugin;
 
@@ -11,12 +13,7 @@ fn main() {
         .add_plugins(PixelatePlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(InputPlugin)
-        .add_systems(Update, spawn_minions)
+        .add_plugins(MinionPlugin)
+        .add_plugins(EntityPlugin)
         .run();
-}
-
-fn spawn_minions(
-    // spawners: Query()
-) {
-
 }

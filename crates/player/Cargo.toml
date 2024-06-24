@@ -9,4 +9,6 @@ leafwing-input-manager = { workspace = true }
 
 pixelate = { path = "../pixelate" }
 entities = { path = "../entities" }
+minions = { path = "../minions" }
 input = { path = "../input" }
+assets = { path = "../assets" }

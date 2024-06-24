@@ -1,4 +1,5 @@
-use bevy::prelude::*;
+use assets::sprite_sheet_bundle;
+use bevy::{prelude::*, utils::HashMap};
 use input::GameInputIntent;
 
 #[derive(Component)]
@@ -7,11 +8,16 @@ pub struct Player;
 pub struct PlayerPlugin;
 
 use entities::{
-    MovementDirect,
-    KinematicEntity,
-    Health
+    GlobalResources, Health, KinematicEntity, MovementDirect
 };
 
+#[derive(Resource)]
+pub struct AssetHandles {
+    pub images: HashMap<String, Handle<Image>>,
+    pub layouts: HashMap<String, Handle<TextureAtlasLayout>>,
+}
+
+use minions::MinionSpawner;
 use pixelate::PIXEL_LAYER;
 
 impl Plugin for PlayerPlugin {
@@ -25,9 +31,12 @@ impl Plugin for PlayerPlugin {
 fn spawn_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut globals: ResMut<GlobalResources>,
 ) {
-    commands.spawn((
+    let player = commands.spawn((
         Player,
+        sprite_sheet_bundle(&asset_server, &mut atlas_layouts, Transform::from_xyz(0., 0., 0.), 12 * 7),
         Health {
             max_health: 100.0,
             health: 100.0,
@@ -35,7 +44,7 @@ fn spawn_player(
         KinematicEntity {
             position: Vec2::new(0.0, 0.0),
             velocity: Vec2::new(0.0, 0.0),
-            radius: 1.0,
+            radius: 8.0,
         },
         MovementDirect {
             input_movement: Vec2::new(0.0, 0.0),
@@ -43,13 +52,17 @@ fn spawn_player(
             speed: 0.0,
             max_speed: 100.0,
         },
-        SpriteBundle {
-            texture: asset_server.load("tile_0084.png"),
-            transform: Transform::from_xyz(0., 0., 1.).with_rotation(Quat::from_rotation_z(0.3)),//.with_scale(Vec3::splat(8.0)),
-            ..default()
+        MinionSpawner {
+            spawn_timer: 0.0,
+            spawn_delay: 0.01,
+            spawn_radius: 100.0,
+            spawn_limit: -1,
+            minion_type: minions::MinionType::Melee1,
         },
         PIXEL_LAYER
     ));
+
+    globals.player_entity = Some(player.id());
 }
 
 fn player_movement(
@@ -72,7 +85,6 @@ fn player_movement(
         let vel = kine.velocity * time.delta_seconds();
         kine.position += vel;
 
-        transform.translation = Vec3::new(kine.position.x.round(), kine.position.y.round(), 0.);
-        transform.rotation = Quat::from_rotation_z(look_angle);
+        *transform = Transform::from_translation(Vec3::new(kine.position.x.round(), kine.position.y.round(), -kine.position.y)) * Transform::from_rotation(Quat::from_rotation_z(look_angle));
     }
 }

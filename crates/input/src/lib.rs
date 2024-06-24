@@ -5,6 +5,7 @@ use leafwing_input_manager::prelude::*;
 pub enum PlayerActions {
     Move,
     Look,
+    Spawn,
 }
 
 impl PlayerActions {
@@ -13,6 +14,7 @@ impl PlayerActions {
         input_map.insert(Self::Move, DualAxis::left_stick());
         input_map.insert(Self::Move, VirtualDPad::wasd());
         input_map.insert(Self::Look, DualAxis::right_stick());
+        input_map.insert(Self::Spawn, GamepadButtonType::RightTrigger);
 
         input_map
     }
@@ -29,6 +31,7 @@ pub struct GameInputIntent {
     pub look: Vec2,
     pub target: Option<Vec2>,
     pub target_entity: Option<Entity>,
+    pub spawn: bool,
 }
 
 pub struct InputPlugin;
@@ -64,5 +67,6 @@ fn handle_inputs(
         intent.look = look.xy().normalize_or_zero();
         intent.target = None;
         intent.target_entity = None;
+        intent.spawn = actions.pressed(&PlayerActions::Spawn);
     }
 }

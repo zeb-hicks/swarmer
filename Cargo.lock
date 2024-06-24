@@ -213,6 +213,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "assets"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "async-broadcast"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2373,8 +2380,10 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 name = "minions"
 version = "0.1.0"
 dependencies = [
+ "assets",
  "bevy",
  "entities",
+ "input",
  "pixelate",
  "rand",
 ]
@@ -2807,6 +2816,7 @@ checksum = "d231b230927b5e4ad203db57bbcbee2802f6bce620b1e4a9024a07d94e2907ec"
 name = "player"
 version = "0.1.0"
 dependencies = [
+ "assets",
  "bevy",
  "entities",
  "input",
