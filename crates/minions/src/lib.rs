@@ -81,7 +81,7 @@ fn spawn_minions(
             };
 
             let mut movement = MovementPathing {
-                max_speed: 12.0,
+                max_speed: 60.0,
                 speed: 0.0,
                 movement_type: MovementType::Direct,
                 ..default()
@@ -93,7 +93,7 @@ fn spawn_minions(
                 }
             }
 
-            commands.spawn((
+            let _minion = commands.spawn((
                 sprite_sheet_bundle(&asset_server, &mut atlas_layouts, Transform::from_xyz(x, y, -y), tile),
                 KinematicEntity {
                     position: Vec2::new(x, y) + transform.translation.xy(),

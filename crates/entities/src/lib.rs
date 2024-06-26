@@ -163,54 +163,52 @@ fn seperate_entities(
     mut query: Query<(Entity, &mut KinematicEntity)>,
     globals: Res<GlobalResources>,
 ) {
-    for _ in 0..6 {
-        let mut pairs = query.iter_combinations_mut();
-        let mut corrections: HashMap<Entity, Vec2> = HashMap::new();
+    let mut pairs = query.iter_combinations_mut();
+    let mut corrections: HashMap<Entity, Vec2> = HashMap::new();
 
-        while let Some([a, b]) = pairs.fetch_next() {
-            let (entity_a, kin_a) = a;
-            let (entity_b, kin_b) = b;
+    while let Some([a, b]) = pairs.fetch_next() {
+        let (entity_a, kin_a) = a;
+        let (entity_b, kin_b) = b;
 
-            let offset = kin_a.position - kin_b.position;
-            let distance = offset.length();
-            let radius = kin_a.radius + kin_b.radius;
+        let offset = kin_a.position - kin_b.position;
+        let distance = offset.length();
+        let radius = kin_a.radius + kin_b.radius;
 
-            if distance < radius {
-                let overlap = radius - distance;
-                let direction = offset.normalize_or_zero();
-                let correction = direction * overlap / 2.0;
+        if distance < radius {
+            let overlap = radius - distance;
+            let direction = offset.normalize_or_zero();
+            let correction = direction * overlap / 2.0;
 
-                let mut correction_a = correction;
-                let mut correction_b = -correction;
-                if let Some(c_a) = corrections.get(&entity_a) {
-                    correction_a += *c_a;
-                }
-                if let Some(c_b) = corrections.get(&entity_b) {
-                    correction_b += *c_b;
-                } else {
-
-                }
-
-                if let Some(player) = globals.player_entity {
-                    if entity_a == player {
-                        correction_b -= correction_a;
-                        correction_a = Vec2::ZERO;
-                    }
-                    if entity_b == player {
-                        correction_a -= correction_b;
-                        correction_b = Vec2::ZERO;
-                    }
-                }
-
-                corrections.insert(entity_a, correction_a);
-                corrections.insert(entity_b, correction_b);
+            let mut correction_a = correction;
+            let mut correction_b = -correction;
+            if let Some(c_a) = corrections.get(&entity_a) {
+                correction_a += *c_a;
             }
+            if let Some(c_b) = corrections.get(&entity_b) {
+                correction_b += *c_b;
+            } else {
+
+            }
+
+            if let Some(player) = globals.player_entity {
+                if entity_a == player {
+                    correction_b -= correction_a;
+                    correction_a = Vec2::ZERO;
+                }
+                if entity_b == player {
+                    correction_a -= correction_b;
+                    correction_b = Vec2::ZERO;
+                }
+            }
+
+            corrections.insert(entity_a, correction_a);
+            corrections.insert(entity_b, correction_b);
         }
+    }
 
-        for (entity, mut kin) in query.iter_mut() {
-            if let Some(correction) = corrections.get(&entity) {
-                kin.position += *correction;
-            }
+    for (entity, mut kin) in query.iter_mut() {
+        if let Some(correction) = corrections.get(&entity) {
+            kin.position += *correction;
         }
     }
 }
