@@ -22,12 +22,24 @@ impl Plugin for EntityPlugin {
     }
 }
 
-#[derive(Default, PartialEq, Eq)]
+pub struct PathData {
+    pub path: Vec<Vec2>,
+    pub next_node: usize,
+    pub patrol: bool,
+}
+
+pub struct BoidData {
+    pub seperation: Vec2,
+    pub cohesion: Vec2,
+    pub alignment: Vec2,
+}
+
+#[derive(Default)]
 pub enum MovementType {
     #[default]
     Direct,
-    Pathed,
-    Boid,
+    Pathed(PathData),
+    Boid(BoidData),
 }
 
 #[derive(Component)]
@@ -82,70 +94,76 @@ fn direct_movement(
 
 fn pathed_movement(
     time: Res<Time>,
-    mut query: Query<(Entity, &mut KinematicEntity, &mut MovementPathing)>,
-    entities: Query<(Entity, &KinematicEntity), Without<MovementPathing>>,
-    
+    mut query: Query<(Entity, &mut KinematicEntity, &Transform, Option<&mut MovementPathing>)>,
     // mut gizmos: Gizmos,
 ) {
     let mut target_pairs: HashMap<Entity, Entity> = HashMap::new();
     let mut target_positions: HashMap<Entity, Vec2> = HashMap::new();
 
-    for (entity, _, mov) in query.iter_mut() {
-        match mov.movement_type {
-            MovementType::Direct => {
-                if let Some(target_entity) = mov.target_entity {
-                    target_pairs.insert(entity, target_entity);
-                }
-            }
-            _ => {}
-        }
-    }
-
-    for (entity, target) in target_pairs.iter() {
-        if let Ok(target_entity) = entities.get(*target) {
-            target_positions.insert(*entity, target_entity.1.position);
-        } else if let Ok(target_entity) = query.get(*target) {
-            target_positions.insert(*entity, target_entity.1.position);
-        }
-    }
-
-    for (entity, mut kin, mut mov) in query.iter_mut() {
-        match mov.movement_type {
-            MovementType::Boid => {
-                // gizmos.circle_2d(kin.position, kin.radius, Color::WHITE);
-            }
-            MovementType::Direct => {
-                // gizmos.circle_2d(kin.position, kin.radius, Color::BLACK);
-                let mut target_pos = kin.position;
-                if let Some(_) = mov.target_entity {
-                    if let Some(t_pos) = target_positions.get(&entity) {
-                        target_pos = *t_pos;
+    // Store all the pairs of entities targeting other entities, and their target
+    for (entity, _, _, mov) in query.iter_mut() {
+        if let Some(mov) = mov {
+            match mov.movement_type {
+                MovementType::Direct => {
+                    if let Some(target_entity) = mov.target_entity {
+                        target_pairs.insert(entity, target_entity);
                     }
-                } else if let Some(target) = mov.target {
-                    target_pos = target;
                 }
-
-                let offset = target_pos - kin.position;
-                let distance = offset.length();
-
-                mov.speed = mov.max_speed;
-                let mov_dist = mov.speed * time.delta_seconds();
-
-                if distance <= mov_dist {
-                    kin.velocity = Vec2::ZERO;
-                    kin.position = target_pos;
-                    mov.speed = 0.0;
-                } else {
-                    kin.velocity = offset.normalize_or_zero() * mov.speed;
-                    let vel = kin.velocity * time.delta_seconds();
-                    kin.position += vel;
-                }
-
-                // gizmos.arrow_2d(kin.position, target_pos, Color::RED);
-                // gizmos.arrow_2d(kin.position, kin.position + kin.velocity, Color::YELLOW);
+                _ => {}
             }
-            MovementType::Pathed => {
-                // gizmos.circle_2d(kin.position, kin.radius, Color::BLUE);
+        }
+    }
+
+    // Store the positions of each target entity
+    for (entity, target) in target_pairs.iter() {
+        if let Ok(target_enitity) = query.get(*target) {
+            let (_, target_kinematics, _, _) = target_enitity;
+            target_positions.insert(*entity, target_kinematics.position);
+        }
+    }
+
+    for (entity, mut kin, _, mov) in query.iter_mut() {
+        if let Some(mut mov) = mov {
+            match mov.movement_type {
+                MovementType::Boid(ref mut _boid_data) => {
+                    // gizmos.circle_2d(kin.position, kin.radius, Color::WHITE);
+                    
+                }
+                MovementType::Direct => {
+                    // gizmos.circle_2d(kin.position, kin.radius, Color::BLACK);
+                    let mut target_pos = kin.position;
+                    if let Some(_) = mov.target_entity {
+                        if let Some(t_pos) = target_positions.get(&entity) {
+                            target_pos = *t_pos;
+                        }
+                    } else if let Some(target) = mov.target {
+                        target_pos = target;
+                    }
+    
+                    let offset = target_pos - kin.position;
+                    let distance = offset.length();
+    
+                    mov.speed = mov.max_speed;
+                    let mov_dist = mov.speed * time.delta_seconds();
+                    mov.direction = offset.normalize_or_zero();
+    
+                    if distance <= mov_dist {
+                        kin.velocity = Vec2::ZERO;
+                        kin.position = target_pos;
+                        mov.speed = 0.0;
+                    } else {
+                        kin.velocity = offset.normalize_or_zero() * mov.speed;
+                        let vel = kin.velocity * time.delta_seconds();
+                        kin.position += vel;
+                    }
+    
+                    // gizmos.arrow_2d(kin.position, target_pos, Color::RED);
+                    // gizmos.arrow_2d(kin.position, kin.position + kin.velocity, Color::YELLOW);
+                }
+                MovementType::Pathed(ref mut _path_data) => {
+                    // gizmos.circle_2d(kin.position, kin.radius, Color::BLUE);
+    
+                }
             }
         }
     }
