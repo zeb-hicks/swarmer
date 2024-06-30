@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{app::AppExit, prelude::*};
 use leafwing_input_manager::prelude::*;
 
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug, Reflect)]
@@ -6,6 +6,8 @@ pub enum PlayerActions {
     Move,
     Look,
     Spawn,
+    Ability,
+    Menu,
 }
 
 impl PlayerActions {
@@ -14,7 +16,11 @@ impl PlayerActions {
         input_map.insert(Self::Move, DualAxis::left_stick());
         input_map.insert(Self::Move, VirtualDPad::wasd());
         input_map.insert(Self::Look, DualAxis::right_stick());
+        input_map.insert(Self::Look, VirtualDPad::arrow_keys());
+        input_map.insert(Self::Spawn, KeyCode::Space);
         input_map.insert(Self::Spawn, GamepadButtonType::RightTrigger);
+        input_map.insert(Self::Menu, KeyCode::Escape);
+        input_map.insert(Self::Menu, GamepadButtonType::Select);
 
         input_map
     }
@@ -57,8 +63,13 @@ fn setup_inputs(
 
 fn handle_inputs(
     mut bundle: Query<(&mut GameInputIntent, &ActionState<PlayerActions>)>,
+    mut exit: EventWriter<AppExit>,
 ) {
     for (mut intent, actions) in &mut bundle {
+        if actions.just_pressed(&PlayerActions::Menu) {
+            exit.send_default();
+        }
+
         let movement = actions.clamped_axis_pair(&PlayerActions::Move).unwrap();
         let look = actions.clamped_axis_pair(&PlayerActions::Look).unwrap();
 
