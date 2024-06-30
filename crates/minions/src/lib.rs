@@ -62,17 +62,17 @@ fn spawn_minions(
     globals: Res<GlobalResources>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut commands: Commands,
-    mut query: Query<(&Transform, &mut MinionSpawner)>,
+    mut query: Query<(&KinematicEntity, &mut MinionSpawner)>,
     inputs: Query<&GameInputIntent>,
 ) {
-    for (transform, mut spawner) in query.iter_mut() {
+    for (kinematic_entity, mut spawner) in query.iter_mut() {
         if !inputs.single().spawn { continue };
         if minion_stats.total > 2048 { continue };
         spawner.spawn_timer -= time.delta_seconds();
         if spawner.spawn_timer <= 0.0 && spawner.spawn_limit != 0 {
             let mut rng = rand::thread_rng();
-            let x = rng.gen_range(-spawner.spawn_radius..spawner.spawn_radius);
-            let y = rng.gen_range(-spawner.spawn_radius..spawner.spawn_radius);
+            let x = rng.gen_range(-spawner.spawn_radius..spawner.spawn_radius) + kinematic_entity.position.x;
+            let y = rng.gen_range(-spawner.spawn_radius..spawner.spawn_radius) + kinematic_entity.position.y;
             let tile = match spawner.minion_type {
                 MinionType::Melee1 => 98,
                 MinionType::Melee2 => 96,
@@ -96,7 +96,7 @@ fn spawn_minions(
             let _minion = commands.spawn((
                 sprite_sheet_bundle(&asset_server, &mut atlas_layouts, Transform::from_xyz(x, y, -y), tile),
                 KinematicEntity {
-                    position: Vec2::new(x, y) + transform.translation.xy(),
+                    position: Vec2::new(x, y),
                     velocity: Vec2::new(0.0, 0.0),
                     radius: 4.0,
                 },
