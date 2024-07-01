@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::{camera::RenderTarget, render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages}, view::RenderLayers}, window::WindowResized};
+use bevy::{prelude::*, render::{camera::RenderTarget, render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages}, texture::ImageSampler, view::RenderLayers}, window::WindowResized};
 
 const RES_WIDTH: u32 = 512;
 const RES_HEIGHT: u32 = 288;
@@ -48,6 +48,7 @@ fn setup_camera(
                 | TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         },
+        sampler: ImageSampler::nearest(),
         ..default()
     };
 
