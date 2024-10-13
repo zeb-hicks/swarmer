@@ -147,10 +147,13 @@ fn pathed_movement(
                     }
 
                     let diff = target - pos;
-                    let dir = diff.normalize_or_zero();
+                    let dist = diff.length();
+                    let dir = match dist {
+                        0.0 => Vec2::new(1.0, 0.0),
+                        _ => diff / dist
+                    };
 
-                    let dist = diff.length_squared();
-                    if dist < mov.speed * mov.speed {
+                    if dist < mov.speed {
                         linear_velocity.0 = diff;
                     } else {
                         linear_velocity.0 = dir * mov.speed;
