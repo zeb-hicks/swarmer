@@ -6,14 +6,15 @@ members = [
 default-members = ["crates/game"]
 
 [workspace.dependencies]
-bevy_framepace = "0.16.0"
-bevy_scriptum = { version = "0.5.0", features = ["rhai"] }
-bevy_spatial = "0.8.0"
-leafwing-input-manager = "0.13.3"
+bevy_framepace = "0.17.1"
+bevy_scriptum = { version = "0.6.0", features = ["rhai"] }
+bevy_spatial = "0.9.1"
+leafwing-input-manager = "0.15.1"
 rand = "0.8.5"
+avian2d = "0.1.2"
 
 [workspace.dependencies.bevy]
-version = "0.13.1"
+version = "0.14.2"
 default-features = false
 features = [
     # "dynamic_linking",
@@ -30,7 +31,6 @@ features = [
     "bevy_sprite",
     "bevy_text",
     "bevy_ui",
-    "multi-threaded",
     "png",
     "hdr",
     "vorbis",
@@ -40,6 +40,7 @@ features = [
     # "tonemapping_luts",
     "default_font",
     # "webgl2",
+    "multi_threaded",
     "file_watcher",
 ]
 

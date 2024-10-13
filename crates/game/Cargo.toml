@@ -6,16 +6,17 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { workspace = true }
-bevy_framepace = { workspace = true }
-bevy_scriptum = { workspace = true }
-leafwing-input-manager = { workspace = true }
+bevy.workspace = true
+bevy_framepace.workspace = true
+bevy_scriptum.workspace = true
+leafwing-input-manager.workspace = true
+avian2d.workspace = true
 
-pixelate = { path = "../pixelate" }
+pixelate.path = "../pixelate"
 
-entities = { path = "../entities" }
-minions = { path = "../minions" }
-player = { path = "../player" }
-# world = { path = "../world" }
-# audio = { path = "../audio" }
-input = { path = "../input" }
+entities.path = "../entities"
+minions.path = "../minions"
+player.path = "../player"
+# world.path = "../world"
+# audio.path = "../audio"
+input.path = "../input"

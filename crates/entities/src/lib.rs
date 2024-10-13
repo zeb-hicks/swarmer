@@ -1,3 +1,4 @@
+use avian2d::prelude::LinearVelocity;
 use bevy::{prelude::*, utils::{HashMap, HashSet}};
 
 #[derive(Component)]
@@ -15,12 +16,21 @@ impl Plugin for EntityPlugin {
         app.add_systems(Update, (
             direct_movement,
             pathed_movement,
-            seperate_entities,
+            // seperate_entities,
             update_transforms,
         ).chain());
+        // app.add_plugins(
+        //     AutomaticUpdate::<SpatialEntity>::new()
+        //         .with_spatial_ds(SpatialStructure::KDTree2)
+        //         .with_frequency(Duration::from_millis(100)),
+        // );
         app.insert_resource(GlobalResources::default());
     }
 }
+
+#[derive(Component)]
+/** Marker component for entities tracked on the KD tree */
+pub struct SpatialEntity;
 
 pub struct PathData {
     pub path: Vec<Vec2>,
@@ -46,13 +56,6 @@ pub enum MovementType {
 pub struct Health {
     pub health: f32,
     pub max_health: f32
-}
-
-#[derive(Component)]
-pub struct KinematicEntity {
-    pub position: Vec2,
-    pub velocity: Vec2,
-    pub radius: f32,
 }
 
 #[derive(Component)]
@@ -85,7 +88,7 @@ pub struct SpatialGrid {
 }
 
 fn direct_movement(
-    mut movables: Query<(&KinematicEntity, &mut MovementDirect)>,
+    mut movables: Query<(&Transform, &mut MovementDirect)>,
 ) {
     for (mut _kin, mut _mov) in movables.iter_mut() {
         
@@ -93,8 +96,7 @@ fn direct_movement(
 }
 
 fn pathed_movement(
-    time: Res<Time>,
-    mut query: Query<(Entity, &mut KinematicEntity, &Transform, Option<&mut MovementPathing>)>,
+    mut query: Query<(Entity, &mut Transform, &mut LinearVelocity, Option<&mut MovementPathing>)>,
     // mut gizmos: Gizmos,
 ) {
     let mut target_pairs: HashMap<Entity, Entity> = HashMap::new();
@@ -117,46 +119,43 @@ fn pathed_movement(
     // Store the positions of each target entity
     for (entity, target) in target_pairs.iter() {
         if let Ok(target_enitity) = query.get(*target) {
-            let (_, target_kinematics, _, _) = target_enitity;
-            target_positions.insert(*entity, target_kinematics.position);
+            let (_, transform, _, _) = target_enitity;
+            target_positions.insert(*entity, transform.translation.xy());
         }
     }
 
-    for (entity, mut kin, _, mov) in query.iter_mut() {
+    for (entity, transform, mut linear_velocity, mov) in query.iter_mut() {
         if let Some(mut mov) = mov {
             match mov.movement_type {
                 MovementType::Boid(ref mut _boid_data) => {
                     // gizmos.circle_2d(kin.position, kin.radius, Color::WHITE);
-                    
                 }
                 MovementType::Direct => {
                     // gizmos.circle_2d(kin.position, kin.radius, Color::BLACK);
-                    let mut target_pos = kin.position;
+                    let pos = transform.translation.xy();
+                    let target;
                     if let Some(_) = mov.target_entity {
                         if let Some(t_pos) = target_positions.get(&entity) {
-                            target_pos = *t_pos;
+                            target = *t_pos;
+                        } else {
+                            target = pos;
                         }
-                    } else if let Some(target) = mov.target {
-                        target_pos = target;
-                    }
-    
-                    let offset = target_pos - kin.position;
-                    let distance = offset.length();
-    
-                    mov.speed = mov.max_speed;
-                    let mov_dist = mov.speed * time.delta_seconds();
-                    mov.direction = offset.normalize_or_zero();
-    
-                    if distance <= mov_dist {
-                        kin.velocity = Vec2::ZERO;
-                        kin.position = target_pos;
-                        mov.speed = 0.0;
+                    } else if let Some(t) = mov.target {
+                        target = t;
                     } else {
-                        kin.velocity = offset.normalize_or_zero() * mov.speed;
-                        let vel = kin.velocity * time.delta_seconds();
-                        kin.position += vel;
+                        target = pos;
                     }
-    
+
+                    let diff = target - pos;
+                    let dir = diff.normalize_or_zero();
+
+                    let dist = diff.length_squared();
+                    if dist < mov.speed * mov.speed {
+                        linear_velocity.0 = diff;
+                    } else {
+                        linear_velocity.0 = dir * mov.speed;
+                    }
+
                     // gizmos.arrow_2d(kin.position, target_pos, Color::RED);
                     // gizmos.arrow_2d(kin.position, kin.position + kin.velocity, Color::YELLOW);
                 }
@@ -170,63 +169,9 @@ fn pathed_movement(
 }
 
 fn update_transforms(
-    mut query: Query<(&KinematicEntity, &mut Transform)>,
+    mut query: Query<&mut Transform>,
 ) {
-    for (kin, mut transform) in query.iter_mut() {
-        *transform = Transform::from_translation(Vec3::new(kin.position.x.round(), kin.position.y.round(), -kin.position.y));
-    }
-}
-
-fn seperate_entities(
-    mut query: Query<(Entity, &mut KinematicEntity)>,
-    globals: Res<GlobalResources>,
-) {
-    let mut pairs = query.iter_combinations_mut();
-    let mut corrections: HashMap<Entity, Vec2> = HashMap::new();
-
-    while let Some([a, b]) = pairs.fetch_next() {
-        let (entity_a, kin_a) = a;
-        let (entity_b, kin_b) = b;
-
-        let offset = kin_a.position - kin_b.position;
-        let distance = offset.length();
-        let radius = kin_a.radius + kin_b.radius;
-
-        if distance < radius {
-            let overlap = radius - distance;
-            let direction = offset.normalize_or_zero();
-            let correction = direction * overlap / 2.0;
-
-            let mut correction_a = correction;
-            let mut correction_b = -correction;
-            if let Some(c_a) = corrections.get(&entity_a) {
-                correction_a += *c_a;
-            }
-            if let Some(c_b) = corrections.get(&entity_b) {
-                correction_b += *c_b;
-            } else {
-
-            }
-
-            if let Some(player) = globals.player_entity {
-                if entity_a == player {
-                    correction_b -= correction_a;
-                    correction_a = Vec2::ZERO;
-                }
-                if entity_b == player {
-                    correction_a -= correction_b;
-                    correction_b = Vec2::ZERO;
-                }
-            }
-
-            corrections.insert(entity_a, correction_a);
-            corrections.insert(entity_b, correction_b);
-        }
-    }
-
-    for (entity, mut kin) in query.iter_mut() {
-        if let Some(correction) = corrections.get(&entity) {
-            kin.position += *correction;
-        }
+    for mut transform in query.iter_mut() {
+        transform.translation.z = -transform.translation.y;
     }
 }

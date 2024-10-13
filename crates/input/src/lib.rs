@@ -3,7 +3,9 @@ use leafwing_input_manager::prelude::*;
 
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug, Reflect)]
 pub enum PlayerActions {
+    #[actionlike(DualAxis)]
     Move,
+    #[actionlike(DualAxis)]
     Look,
     Spawn,
     Ability,
@@ -13,10 +15,10 @@ pub enum PlayerActions {
 impl PlayerActions {
     fn default_input_map() -> InputMap<Self> {
         let mut input_map = InputMap::default();
-        input_map.insert(Self::Move, DualAxis::left_stick());
-        input_map.insert(Self::Move, VirtualDPad::wasd());
-        input_map.insert(Self::Look, DualAxis::right_stick());
-        input_map.insert(Self::Look, VirtualDPad::arrow_keys());
+        input_map.insert_dual_axis(Self::Move, GamepadStick::LEFT);
+        input_map.insert_dual_axis(Self::Move, KeyboardVirtualDPad::WASD);
+        input_map.insert_dual_axis(Self::Look, GamepadStick::RIGHT);
+        input_map.insert_dual_axis(Self::Look, KeyboardVirtualDPad::ARROW_KEYS);
         input_map.insert(Self::Spawn, KeyCode::Space);
         input_map.insert(Self::Spawn, GamepadButtonType::RightTrigger);
         input_map.insert(Self::Menu, KeyCode::Escape);
@@ -70,8 +72,8 @@ fn handle_inputs(
             exit.send_default();
         }
 
-        let movement = actions.clamped_axis_pair(&PlayerActions::Move).unwrap();
-        let look = actions.clamped_axis_pair(&PlayerActions::Look).unwrap();
+        let movement = actions.clamped_axis_pair(&PlayerActions::Move);
+        let look = actions.clamped_axis_pair(&PlayerActions::Look);
 
         intent.movement = movement.xy().normalize_or_zero();
         intent.movement_amplitude = movement.xy().length();

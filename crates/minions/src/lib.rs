@@ -1,9 +1,9 @@
-use assets::sprite_sheet_bundle;
 use bevy::prelude::*;
-use entities::{GlobalResources, KinematicEntity, MovementPathing, MovementType};
+use entities::{GlobalResources, MovementPathing, MovementType, SpatialEntity};
 use input::GameInputIntent;
 use pixelate::PIXEL_LAYER;
 use rand::prelude::*;
+use avian2d::prelude::*;
 
 pub struct MinionPlugin;
 
@@ -12,6 +12,7 @@ impl Plugin for MinionPlugin {
 		app.add_systems(Update, (
             count_minions,
             spawn_minions,
+            minion_wander,
             move_minions,
         ));
         app.insert_resource(MinionStats::default());
@@ -60,25 +61,26 @@ fn spawn_minions(
     asset_server: Res<AssetServer>,
     minion_stats: Res<MinionStats>,
     globals: Res<GlobalResources>,
-    mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    // mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    // mut cached_layouts: ResMut<AtlasLayouts>,
     mut commands: Commands,
-    mut query: Query<(&KinematicEntity, &mut MinionSpawner)>,
+    mut query: Query<(&Transform, &mut MinionSpawner)>,
     inputs: Query<&GameInputIntent>,
 ) {
-    for (kinematic_entity, mut spawner) in query.iter_mut() {
+    for (transform, mut spawner) in query.iter_mut() {
         if !inputs.single().spawn { continue };
         if minion_stats.total > 2048 { continue };
         spawner.spawn_timer -= time.delta_seconds();
         if spawner.spawn_timer <= 0.0 && spawner.spawn_limit != 0 {
             let mut rng = rand::thread_rng();
-            let x = rng.gen_range(-spawner.spawn_radius..spawner.spawn_radius) + kinematic_entity.position.x;
-            let y = rng.gen_range(-spawner.spawn_radius..spawner.spawn_radius) + kinematic_entity.position.y;
-            let tile = match spawner.minion_type {
-                MinionType::Melee1 => 98,
-                MinionType::Melee2 => 96,
-                MinionType::Ranged1 => 112,
-                MinionType::Ranged2 => 111,
-            };
+            let x = rng.gen_range(-spawner.spawn_radius..spawner.spawn_radius) + transform.translation.x;
+            let y = rng.gen_range(-spawner.spawn_radius..spawner.spawn_radius) + transform.translation.y;
+            // let tile = match spawner.minion_type {
+            //     MinionType::Melee1 => 98,
+            //     MinionType::Melee2 => 96,
+            //     MinionType::Ranged1 => 112,
+            //     MinionType::Ranged2 => 111,
+            // };
 
             let mut movement = MovementPathing {
                 max_speed: 60.0,
@@ -94,15 +96,19 @@ fn spawn_minions(
             }
 
             let _minion = commands.spawn((
-                sprite_sheet_bundle(&asset_server, &mut atlas_layouts, Transform::from_xyz(x, y, -y), tile),
-                KinematicEntity {
-                    position: Vec2::new(x, y),
-                    velocity: Vec2::new(0.0, 0.0),
-                    radius: 4.0,
+                SpriteBundle {
+                    texture: asset_server.load("soldier.png"),
+                    transform: Transform::from_xyz(x, y, -y),
+                    ..default()
                 },
+                Circle::new(4.0).collider(),
+                RigidBody::Dynamic,
+                Friction::new(0.1),
+                LockedAxes::ROTATION_LOCKED,
                 Minion {
                     minion_type: spawner.minion_type,
                 },
+                SpatialEntity,
                 movement,
                 PIXEL_LAYER
             ));
@@ -114,17 +120,36 @@ fn spawn_minions(
     }
 }
 
-fn move_minions(
+fn minion_wander(
     // mut commands: Commands,
     // time: Res<Time>,
-    mut minions: Query<(Entity, &KinematicEntity, &mut MovementPathing, &mut Transform)>,
+    mut minions: Query<(Entity, &mut MovementPathing, &mut Transform)>,
 ) {
-    for (_entity, kin, mut movement, mut _transform) in minions.iter_mut() {
+    minions.par_iter_mut().for_each(|(_, mut movement, mut _transform)| {
         let mut rng = rand::thread_rng();
         if rng.gen_bool(0.01) {
             let x = rng.gen_range(-32.0..32.0);
             let y = rng.gen_range(-32.0..32.0);
-            movement.target = Some(Vec2::new(x, y) + kin.position);
+            movement.target = Some(Vec2::new(x, y) + _transform.translation.truncate());
         }
-    }
+    });
+}
+
+fn move_minions(
+    mut minions: Query<(&mut LinearVelocity, &MovementPathing, &Transform)>,
+) {
+    minions.par_iter_mut().for_each(|(mut linear_velocity, movement, transform)| {
+        let offset = match movement.target {
+            Some(target) => target - transform.translation.truncate(),
+            None => Vec2::ZERO,
+        };
+        let distance = offset.length();
+        let speed = movement.max_speed;
+        let direction = offset.normalize_or_zero();
+        let mut motion = direction * speed;
+        if distance <= speed {
+            motion = offset;
+        }
+        linear_velocity.0 = motion;
+    });
 }

@@ -15,13 +15,26 @@ pub struct GameCamera;
 #[derive(Component)]
 pub struct FinalCamera;
 
-pub struct PixelatePlugin;
+#[derive(Resource)]
+pub struct PixelCameraResolution {
+    pub width: usize,
+    pub height: usize,
+}
+
+pub struct PixelatePlugin {
+    pub width: usize,
+    pub height: usize,
+}
 
 impl Plugin for PixelatePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Msaa::Off);
         app.add_systems(Startup, setup_camera);
 		app.add_systems(Update, resize_window);
+        app.insert_resource(PixelCameraResolution {
+            width: self.width,
+            height: self.height,
+        });
     }
 }
 

@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { workspace = true }
-rand = { workspace = true }
+bevy.workspace = true
+rand.workspace = true
+avian2d.workspace = true
 
-pixelate = { path = "../pixelate" }
-entities = { path = "../entities" }
-input = { path = "../input" }
-assets = { path = "../assets" }
+pixelate.path = "../pixelate"
+entities.path = "../entities"
+input.path = "../input"

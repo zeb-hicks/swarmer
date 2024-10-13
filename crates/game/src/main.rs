@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use avian2d::PhysicsPlugins;
 use bevy::prelude::*;
 use entities::EntityPlugin;
 use input::InputPlugin;
@@ -18,5 +19,6 @@ fn main() {
         .add_plugins(InputPlugin)
         .add_plugins(MinionPlugin)
         .add_plugins(EntityPlugin)
+        .add_plugins(PhysicsPlugins::default().with_length_unit(16.0))
         .run();
 }
